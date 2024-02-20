@@ -35,6 +35,7 @@ jobs:
       run: |
         mv kptools-linux kptools
         mv kpimg-android kpimg
+        chmod +x magiskboot kptools-linux
       shell: bash
 
     - name: Patch commands
