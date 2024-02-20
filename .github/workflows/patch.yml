@@ -40,7 +40,6 @@ jobs:
 
     - name: Patch commands
       run: |
-        file magiskboot
         ./magiskboot unpack boot.img
         mv kernel kernel.ori
         ./kptools -p -i kernel.ori -k kpimg -s $SKEY -o kernel
