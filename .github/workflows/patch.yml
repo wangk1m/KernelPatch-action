@@ -1,58 +1,53 @@
 name: Patch Workflow
 
-on:
-  push:
-    tags:
-      - 'v*'
-
-env:
-  BOOT_URL: ${{ secrets.BOOT_URL }}
-  KP_IMG_URL: ${{ secrets.KP_IMG_URL }}
-  KP_TOOLS_URL: ${{ secrets.KP_TOOLS_URL }}
-  SKEY: ${{ secrets.SKEY }}
+on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
+    - name: Set up environment variables
+      run: echo "PATCHVBMETAFLAG=true" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Load config variables
+      id: config
+      run: |
+        # Assuming the config.env file is in the root of the repository
+        cat config.env | xargs -n1 | while read line; do
+          echo "Setting $line"
+          echo "$line" >>$GITHUB_ENV
+        done
+      shell: bash
 
     - name: Download files
       run: |
-        wget $BOOT_URL -O boot.img
-        wget $KP_IMG_URL -O kpimg
-        wget $KP_TOOLS_URL -O kptools
-        chmod +x kptools
+        wget -O magiskboot $MAGISKBOOT_URL
+        wget -O kpimg-android $KP_IMG_URL
+        wget -O kptools-linux $KP_TOOLS_URL
+        wget -O boot.img $BOOT_URL
+        chmod +x magiskboot kptools-linux
+      shell: bash
 
-    - name: Patch the kernel
+    - name: Rename files
+      run: |
+        mv kptools-linux kptools
+        mv kpimg-android kpimg
+      shell: bash
+
+    - name: Patch commands
       run: |
         ./magiskboot unpack boot.img
         mv kernel kernel.ori
         ./kptools -p -i kernel.ori -k kpimg -s $SKEY -o kernel
         ./magiskboot repack boot.img
+      shell: bash
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./boot.img
-        asset_name: boot-patched.img
-        asset_content_type: application/octet-stream
+        name: new-boot.img
+        path: new-boot.img
+        retention-days: 1
