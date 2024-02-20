@@ -1,6 +1,9 @@
 name: Patch Workflow
 
-on: [push]
+on: 
+  push:
+    branches: [ main ]
+  manual:
 
 jobs:
   build:
