@@ -26,8 +26,7 @@ jobs:
 
     - name: Download files
       run: |
-        # wget -O magiskboot $MAGISKBOOT_URL
-         wget https://raw.githubusercontent.com/daboynb/magisk_for_linux/main/magisk.sh && chmod +x magisk.sh && ./magisk.sh
+        wget -O magiskboot $MAGISKBOOT_URL
         wget -O kpimg-android $KP_IMG_URL
         wget -O kptools-linux $KP_TOOLS_URL
         wget -O boot.img $BOOT_URL
