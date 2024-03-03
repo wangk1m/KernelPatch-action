@@ -28,18 +28,21 @@ jobs:
     - name: Get latest tag from bmax121/kernelpatch
       id: latest_tag_kernelpatch
       run: |
-        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/github-cli-archive-keyring.gpg
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/github-cli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-        sudo apt update
-        sudo apt install gh
-        gh repo view bmax121/kernelpatch --json tagName -q '.tagName' > latest_tag.txt
-        echo "::set-output name=tag::$(cat latest_tag.txt)"
+        # 使用GitHub API获取bmax121/kernelpatch的最新tag
+        latest_tag_response=$(curl -s https://api.github.com/repos/bmax121/kernelpatch/tags)
+        # 解析JSON响应以获取最新tag
+        latest_tag=$(echo "$latest_tag_response" | grep -o '"name":.*' | head -n 1 | cut -d '"' -f 4)
+        echo "Latest tag is: $latest_tag"
+        # 设置输出变量
+        echo "::set-output name=tag::$latest_tag"
       shell: bash
 
     # 使用获取到的最新tag来设置下载链接
     - name: Set download URLs with latest tag from bmax121/kernelpatch
       run: |
+        # 更新kptools-linux的下载链接
         echo "KP_TOOLS_URL=https://github.com/bmax121/KernelPatch/releases/download/${{ steps.latest_tag_kernelpatch.outputs.tag }}/kptools-linux" >>$GITHUB_ENV
+        # 更新kpimg-android的下载链接
         echo "KP_IMG_URL=https://github.com/bmax121/KernelPatch/releases/download/${{ steps.latest_tag_kernelpatch.outputs.tag }}/kpimg-android" >>$GITHUB_ENV
       shell: bash
 
